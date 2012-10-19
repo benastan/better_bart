@@ -7,6 +7,7 @@ module Bart
   API_HOST = 'api.bart.gov'
   SCRIPT_URLS = {
     :routes => 'route.aspx',
+    :stations => 'stn.aspx',
     :etd => 'etd.aspx'
   }
 
@@ -34,7 +35,34 @@ module Bart
       end
       route
     end
-    routes
+
+    return routes if route_num.nil?
+    routes[0]
+  end
+
+  def self.stations orig = nil
+    params = {}
+    if orig.nil?
+      params[:cmd] = 'stns'
+    else
+      params[:cmd] = 'stninfo'
+      params[:orig] = orig
+    end
+
+    path = self.path_for :stations, params
+    xml = self.get_xml path
+
+    stations = xml.css('stations').css('station').collect do |s|
+      station = {}
+      s.children.each do |s|
+        station[s.name.to_sym] = s.text
+      end
+
+      station
+    end
+
+    return stations if orig.nil?
+    stations[0]
   end
 
   def self.real_time_info orig, additional_params = nil
@@ -45,8 +73,6 @@ module Bart
     if not additional_params.nil?
       params = params.merge(additional_params)
     end
-
-    puts params
 
     path = self.path_for :etd, params
     xml = self.get_xml path
@@ -71,5 +97,9 @@ module Bart
 
   def self.get_xml path
     Nokogiri::XML.parse(self.get(path))
+  end
+
+  def self.get_xml_and_path_for what, params
+    self.get_xml(self.path_for(what, params))
   end
 end
