@@ -13,4 +13,6 @@ Gem::Specification.new do |gem|
   gem.name          = "better_bart"
   gem.require_paths = ["lib"]
   gem.version       = Bart::VERSION
+
+  gem.add_dependency 'nokogiri'
 end
