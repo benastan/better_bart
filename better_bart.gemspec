@@ -14,5 +14,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = Bart::VERSION
 
-  gem.add_dependency 'nokogiri'
+  gem.add_dependency 'faraday'
+  gem.add_dependency 'ox'
+  gem.add_development_dependency 'rspec'
+  gem.add_development_dependency 'pry'
 end
