@@ -12,8 +12,12 @@ module Bart
       end
 
       def [](arg)
-        fetch! if fetch?
-        @stations[arg]
+        if (station = @stations[arg]).nil?
+          station = Station.new(arg)
+        else
+          station.fetch!
+        end
+        station
       end
 
       def []=(arg, val)
@@ -52,9 +56,21 @@ module Bart
       end
     end
 
-    def initialize(attrs)
+    def initialize(arg)
+      if arg.is_a?(Hash)
+        parse_attributes(arg)
+      elsif arg.is_a?(String)
+        @abbr = arg.to_sym
+        fetch!
+      elsif arg.is_a?(Symbol)
+        @abbr = arg
+        fetch!
+      end
+    end
+
+    def parse_attributes(attrs)
       @name = attrs[:name]
-      @abbr = attrs[:abbr]
+      @abbr = attrs[:abbr].downcase.to_sym
       @latitude = attrs[:gtfs_latitude]
       @longitude = attrs[:gtfs_longitude]
       @address = attrs[:address]
@@ -70,6 +86,7 @@ module Bart
     def fetch!
       @ox = Bart::Request.get(:station, :orig => self.abbr.to_s.upcase).locate('*/stations/station')[0]
       attrs = self.class.ox_to_hash(@ox)
+      parse_attributes(attrs)
     end
 
     def routes
@@ -81,9 +98,13 @@ module Bart
 
     def fetch_routes!
       fetch! if fetch?
-      @routes = @ox.locate('*/route').collect do |route|
+
+      @routes = @ox.locate('*/route').inject({}) do |memo, route|
         route_number = route.nodes[0].split(' ')[1].to_i
-        Bart[route_number]
+        route = Bart[route_number]
+        key = route.origin == self.abbr ? {:to => route.destination} : {:from => route.origin}
+        memo[key] = route
+        memo
       end
     end
 
