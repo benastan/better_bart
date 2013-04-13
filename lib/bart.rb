@@ -1,11 +1,14 @@
 require 'json'
 require 'bart/request'
 require 'bart/route'
+require 'bart/station'
 
 module Bart
   def self.[](arg)
-    if arg.is_a?(Symbol)
-      # station info
+    if arg.is_a?(String)
+      Bart::Station[arg.to_sym]
+    elsif arg.is_a?(Symbol)
+      Bart::Station[arg]
     elsif arg.is_a?(DateTime)
       # schedule finder
     elsif arg.is_a?(Hash)

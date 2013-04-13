@@ -7,11 +7,14 @@ module Bart
       :routes => 'route.aspx',
       :route => 'route.aspx',
       :stations => 'stn.aspx',
+      :station => 'stn.aspx',
       :etd => 'etd.aspx'
     }
     COMMANDS = {
       :route => 'routeinfo',
-      :routes => 'routes'
+      :routes => 'routes',
+      :station => 'stninfo',
+      :stations => 'stns'
     }
     API_KEY = 'EMH2-BJSB-ITEQ-95MP'
     HOSTNAME = 'api.bart.gov'
