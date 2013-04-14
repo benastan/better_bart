@@ -1,5 +1,7 @@
 require 'faraday'
-require 'ox'
+require 'multi_xml'
+
+MultiXml.parser = :ox
 
 module Bart
   module Request
@@ -14,15 +16,16 @@ module Bart
       :route => 'routeinfo',
       :routes => 'routes',
       :station => 'stninfo',
-      :stations => 'stns'
+      :stations => 'stns',
+      :etd => 'etd'
     }
     API_KEY = 'EMH2-BJSB-ITEQ-95MP'
     HOSTNAME = 'api.bart.gov'
 
     def self.parametrize(params)
       params.collect do |k, v|
-        "#{k.to_s}=#{URI.escape(v.to_s)}"
-      end.join('&')
+        v.nil? ? nil : "#{k.to_s}=#{URI.escape(v.to_s)}"
+      end.compact.join('&')
     end
 
     def self.get(resource, params = {})
@@ -33,7 +36,7 @@ module Bart
       path = "#{File.join('http://', HOSTNAME, 'api', filename)}#{querystring}"
       response = Faraday.get(path)
       xml_string = response.body
-      Ox.parse(xml_string)
+      MultiXml.parse(xml_string)
     end
   end
 end

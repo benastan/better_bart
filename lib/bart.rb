@@ -2,6 +2,7 @@ require 'json'
 require 'bart/request'
 require 'bart/route'
 require 'bart/station'
+require 'bart/departure'
 
 module Bart
   def self.[](arg)
@@ -13,7 +14,7 @@ module Bart
       # schedule finder
     elsif arg.is_a?(Hash)
       Bart::Route[arg]
-    elsif arg.is_a?(Fixnum)
+    elsif arg.is_a?(Numeric)
       Bart::Route[arg]
     end
   end
