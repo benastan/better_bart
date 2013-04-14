@@ -1,18 +1,13 @@
 module Bart
-  class Station
+  class Station < Fetchable
     attr_accessor :routes, :address, :city, :state, :latitude, :longitude, :abbr, :name
-    @stations = {}
-    @fetch_all = true
+
+    @filename = 'stn.aspx'
+    @cmd = 'stns'
 
     class << self
-      def new(attrs)
-        station = super(attrs)
-        @stations[station.abbr.downcase.to_sym] = station
-        station
-      end
-
       def [](arg)
-        if (station = @stations[arg]).nil?
+        if (station = objects[arg]).nil?
           station = Station.new(arg)
         else
           station.fetch!
@@ -21,24 +16,16 @@ module Bart
       end
 
       def []=(arg, val)
-        @stations[arg] = val
+        objects[arg] = val
       end
 
       def all
         fetch! if fetch?
-        @stations
+        objects
       end
 
-      def fetch?
-        @fetch_all == true
-      end
-
-      def fetch!
-        @fetch_all = false
-        @result = Bart::Request.get(:stations)['root']['stations'].values
-        @result.each do |station|
-          new(station)
-        end
+      def result
+        @result ||= super['stations'].values[0]
       end
     end
 
@@ -55,6 +42,9 @@ module Bart
     end
 
     def parse_attributes(attrs)
+      @filename = 'stn.aspx'
+      @cmd = 'stninfo'
+
       @name = attrs['name']
       @abbr = attrs['abbr'].downcase.to_sym
       @latitude = attrs['gtfs_latitude']
