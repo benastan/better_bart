@@ -4,7 +4,7 @@ Ruby wrapper for the [Real BART API](http://api.bart.gov/docs/overview/index.asp
 
 ## Installation
 
-    gem 'bart', git: 'git://github.com/benastan/better_bart.git', branch: 'major_refactor'
+    gem 'bart', git: 'git://github.com/benastan/better_bart.git'
     $ bundle
     
 ## Usage
