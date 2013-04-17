@@ -9,7 +9,7 @@ module Bart
     class << self
       def <<(klass)
         objects[klass.number] = klass
-        objects[klass.search_hash] = klass.number
+        @aliases[klass.search_hash] = klass.number
       end
 
       def new(attrs)
@@ -102,7 +102,6 @@ module Bart
       segment_origin = segment_hash.keys[0]
       segment_destination = segment_hash.values[0]
       result = @stations.inject(nil) do |memo, station|
-        puts memo
         if memo.nil? && station == segment_origin
           memo = segment_origin
         elsif memo == segment_origin && station == segment_destination
