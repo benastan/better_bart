@@ -1,7 +1,6 @@
 require 'json'
 require 'bart/requestable'
 require 'bart/fetchable'
-require 'bart/request'
 require 'bart/route'
 require 'bart/station'
 require 'bart/departure'

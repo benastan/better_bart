@@ -6,6 +6,15 @@ module Bart
     @cmd = 'stns'
 
     class << self
+      def new(arg)
+        klass = super
+        klass.send(:extend, InstanceMethods)
+        if arg.is_a?(String) || arg.is_a?(Symbol)
+          klass.fetch!
+        end
+        klass
+      end
+
       def [](arg)
         if (station = objects[arg]).nil?
           station = Station.new(arg)
@@ -30,76 +39,72 @@ module Bart
     end
 
     def initialize(arg)
+      @filename = 'stn.aspx'
+      @cmd = 'stninfo'
+
       if arg.is_a?(Hash)
         parse_attributes(arg)
       elsif arg.is_a?(String)
         @abbr = arg.to_sym
-        fetch!
       elsif arg.is_a?(Symbol)
         @abbr = arg
-        fetch!
       end
     end
 
-    def parse_attributes(attrs)
-      @filename = 'stn.aspx'
-      @cmd = 'stninfo'
-
-      @name = attrs['name']
-      @abbr = attrs['abbr'].downcase.to_sym
-      @latitude = attrs['gtfs_latitude']
-      @longitude = attrs['gtfs_longitude']
-      @address = attrs['address']
-      @city = attrs['city']
-      @state = attrs['state']
-      @zipcode = attrs['zipcode']
-    end
-
-    def fetch?
-      @routes.nil?
-    end
-
-    def fetch!
-      @result = Bart::Request.get(:station, :orig => self.abbr.to_s.upcase)
-      @result =  @result['root']['stations'].values.first
-      parse_attributes(@result)
-    end
-
-    def routes
-      fetch_routes! unless routes_fetched?
-      @routes
-    end
-
-    def departures
-      DepartureRequest.new(self)
-    end
-
-    def northbound_departures
-      departures.north
-    end
-
-    def northbound_departures
-      departures.south
-    end
-
-    private
-
-    def fetch_routes!
-      fetch! if fetch?
-
-      @routes = @result.select {|k,v| k =~ /_routes/}.values.compact.collect(&:values).flatten.collect(&:split).flatten.reject {|v| v == 'ROUTE'}.collect.collect(&:to_i).inject({}) do |memo, route_number|
-        route = Bart[route_number]
-        key = route.origin == self.abbr ? {:to => route.destination} : {:from => route.origin}
-        memo[key] = route
-        memo
+    module InstanceMethods
+      def parse_attributes(attrs)
+        @name = attrs['name']
+        @abbr = attrs['abbr'].downcase.to_sym
+        @latitude = attrs['gtfs_latitude']
+        @longitude = attrs['gtfs_longitude']
+        @address = attrs['address']
+        @city = attrs['city']
+        @state = attrs['state']
+        @zipcode = attrs['zipcode']
       end
 
-      @routes.extend(RouteDatasetMethods)
-      @routes.station = self
-    end
+      def fetch?
+        @routes.nil?
+      end
 
-    def routes_fetched?
-      ! @routes.nil?
+      def params
+        super.merge(orig: @abbr)
+      end
+
+      def result
+        @result ||= super['stations'].values.first
+      end
+
+      def fetch!
+        parse_attributes(result)
+      end
+
+      def routes
+        fetch_routes! unless routes_fetched?
+        @routes
+      end
+
+      def departures(arg = nil)
+        @departures = Bart::Departure.from(@abbr)
+        arg.nil? ? @departures : @departures[arg]
+      end
+
+      private
+
+      def fetch_routes!
+        fetch! if fetch?
+
+        @routes = @result.select {|k,v| k =~ /_routes/}.values.compact.collect(&:values).flatten.collect(&:split).flatten.reject {|v| v == 'ROUTE'}.collect.collect(&:to_i).collect do |route_number|
+          route = Bart[route_number]
+        end
+
+        @routes.extend(RouteDatasetMethods)
+        @routes.station = self
+      end
+
+      def routes_fetched?
+        ! @routes.nil?
+      end
     end
 
     module RouteDatasetMethods
@@ -111,18 +116,14 @@ module Bart
         elsif arg.is_a?(Hash)
           direction = arg.keys.first
           station = arg.values.first
-          routes = self.values
+          routes = self
 
-          unless (result = super(arg)).nil?
-            result
-          else
-            routes.select do |route|
-              stations = direction == :to ? route.stations : route.stations.reverse
-              if (station_index = stations.index(station)).nil?
-                false
-              else
-                stations.index(@station.abbr) < station_index
-              end
+          routes.select do |route|
+            stations = direction == :to ? route.stations : route.stations.reverse
+            if (station_index = stations.index(station)).nil?
+              false
+            else
+              stations.index(@station.abbr) < station_index
             end
           end
         end
