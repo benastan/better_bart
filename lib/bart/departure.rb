@@ -75,10 +75,10 @@ module Bart
         if arg.is_a?(Numeric)
           super(arg)
         elsif arg.is_a?(Symbol)
-          self.select do |departure|
+          dataset(self.select do |departure|
             stations = departure.route.stations
             stations.include?(arg) && (stations.index(departure.origin) < stations.index(arg))
-          end
+          end)
         else
           # @TODO: Throw ArgumentError
         end
@@ -88,16 +88,27 @@ module Bart
         self[other_station]
       end
 
+      def estimates
+        collect(&:minutes).sort
+      end
+
       def northbound
-        select { |departure| departure.northbound? }
+        dataset(select(&:northbound?))
       end
 
       def southbound
-        select { |departure| departure.southbound? }
+        dataset(select(&:southbound?))
       end
 
       def platform(platform)
-        select { |departure| departure.platform === platform }
+        dataset(select { |departure| departure.platform === platform })
+      end
+
+      private
+
+      def dataset(ary)
+        ary.send(:extend, DatasetMethods)
+        ary
       end
     end
   end

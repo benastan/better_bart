@@ -38,7 +38,7 @@ module Bart
 
       def all
         fetch! if fetch?
-        self
+        objects
       end
 
       def []=(arg, val)

@@ -4,6 +4,7 @@ module Bart
 
     @filename = 'stn.aspx'
     @cmd = 'stns'
+    @fetchall = true
 
     class << self
       def new(arg)
@@ -36,6 +37,15 @@ module Bart
       def result
         @result ||= super['stations'].values[0]
       end
+
+      def fetch?
+        @fetchall === true
+      end
+
+      def fetch!
+        @fetchall = false
+        super
+      end
     end
 
     def initialize(arg)
@@ -51,18 +61,18 @@ module Bart
       end
     end
 
-    module InstanceMethods
-      def parse_attributes(attrs)
-        @name = attrs['name']
-        @abbr = attrs['abbr'].downcase.to_sym
-        @latitude = attrs['gtfs_latitude']
-        @longitude = attrs['gtfs_longitude']
-        @address = attrs['address']
-        @city = attrs['city']
-        @state = attrs['state']
-        @zipcode = attrs['zipcode']
-      end
+    def parse_attributes(attrs)
+      @name = attrs['name']
+      @abbr = attrs['abbr'].downcase.to_sym
+      @latitude = attrs['gtfs_latitude']
+      @longitude = attrs['gtfs_longitude']
+      @address = attrs['address']
+      @city = attrs['city']
+      @state = attrs['state']
+      @zipcode = attrs['zipcode']
+    end
 
+    module InstanceMethods
       def fetch?
         @routes.nil?
       end
@@ -108,11 +118,11 @@ module Bart
     end
 
     module RouteDatasetMethods
-      def [](arg = nil)
+      def [](arg)
         if arg.is_a?(Symbol)
-          routes = self.select do |search_hash, route|
+          routes = self.select do |route|
             route.stations.include?(arg)
-          end.values
+          end
         elsif arg.is_a?(Hash)
           direction = arg.keys.first
           station = arg.values.first

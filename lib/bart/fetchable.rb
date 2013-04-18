@@ -17,7 +17,7 @@ module Bart
       end
 
       def <<(klass)
-        @objects[klass.abbr.downcase.to_sym] = klass
+        objects[klass.abbr.downcase.to_sym] = klass
       end
 
       def fetch?
