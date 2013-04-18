@@ -1,38 +1,104 @@
 module Bart
-  class DepartureRequest
-    attr_accessor :origin, :direction, :platform, :departures
+  class Departure < Requestable
+    attr_accessor :bikes, :origin, :destination, :direction, :cars, :minutes, :platform
 
-    def initialize(arg)
-      if arg.is_a?(Bart::Station)
-        @origin = arg
-      elsif arg.is_a?(Bart::Route)
-        @origin = Bart[arg.origin]
-        @route = arg
-        @route.fetch! if @route.fetch?
-      elsif arg.is_a?(Hash)
-      else
-        throw ArgumentError.new
+    @filename = 'etd.aspx'
+    @cmd = 'etd'
+
+    class << self
+      def from(station, platform = nil, direction = nil)
+        @direction = direction unless direction.nil?
+        @platform = platform unless platform.nil?
+        @station = station
+        @request = true
+        fetch!
+        objects
+      end
+
+      def objects
+        @objects
+      end
+
+      def fetch!
+        @result = nil
+        @objects = result.collect do |group|
+          abbr = group['abbreviation'].downcase.to_sym
+          [group['estimate']].flatten.collect do |attrs|
+            attrs['destination'] = abbr
+            attrs['origin'] = @station
+            new(attrs)
+          end
+        end.flatten
+        @objects.send(:extend, DatasetMethods)
+        nil
+      end
+
+      def params
+        params = { orig: @station }
+        params[:plat] = @platform unless @platform.nil?
+        params[:dir] = @direction unless @direction.nil?
+        super.merge(params)
+      end
+
+      def result
+        @result ||= begin
+                      result = super['root']['station']['etd']
+                      result.is_a?(Array) ? result : [result]
+                    end
       end
     end
 
-    def north
-      @direction = 'n'
-      self
+    def initialize(attrs)
+      @minutes = attrs['minutes'].to_i
+      @bikes = attrs['bikeflag'] === "1"
+      @cars = attrs['length'].to_i
+      @platform = attrs['platform'].to_i
+      @direction = attrs['direction'].downcase.to_sym
+      @origin = attrs['origin']
+      @destination = attrs['destination']
     end
 
-    def south
-      @direction = 's'
-      self
+    def route
+      @route ||= Bart[@origin].routes[:to => @destination].first
     end
 
-    def results
-      parse_ox(Bart::Request.get(:etd, params))
+    def northbound?
+      @direction === :north
     end
 
-    private
+    def southbound?
+      @direction === :south
+    end
 
-    def params
-      {:orig => @origin.abbr, :direction => @direction, :platform => @platform}
+    module DatasetMethods
+      def [](arg)
+        if arg.is_a?(Numeric)
+          super(arg)
+        elsif arg.is_a?(Symbol)
+          self.select do |departure|
+            stations = departure.route.stations
+            stations.include?(arg) && (stations.index(departure.origin) < stations.index(arg))
+          end
+        else
+          # @TODO: Throw ArgumentError
+        end
+      end
+
+      def to(other_station)
+        self[other_station]
+      end
+
+      def northbound
+        select { |departure| departure.northbound? }
+      end
+
+      def southbound
+        select { |departure| departure.southbound? }
+      end
+
+      def platform(platform)
+        select { |departure| departure.platform === platform }
+      end
     end
   end
 end

@@ -42,10 +42,12 @@ Access stations using either a string or symbol as per the Real BART API's [Stat
 
 For example, to request Civic Center:
 
-    sfia = Bart[:civc]
+    civc = Bart[:civc]
     => #<Bart::Station:0x007fa469a61fe8 @abbr=:civc, @result={"name"=>"Civic Center/UN Plaza", "abbr"=>"CIVC", "gtfs_latitude"=>"37.779528", "gtfs_longitude"=>"-122.413756", "address"=>"1150 Market Street", "city"=>"San Francisco", "county"=>"sanfrancisco", "state"=>"CA", "zipcode"=>"94102", "north_routes"=>{"route"=>["ROUTE 2", " ROUTE 6", " ROUTE 8", " ROUTE 12"]}, "south_routes"=>{"route"=>["ROUTE 1", " ROUTE 5", " ROUTE 7", " ROUTE 11"]}, "north_platforms"=>{"platform"=>"2"}, "south_platforms"=>{"platform"=>"1"}, "platform_info"=>"Always check destination signs and listen for departure announcements.", "intro"=>"Civic Center/UN Plaza Station is nearby some notable San Francisco destinations including including City Hall, War Memorial Opera House, Asian Art Museum, Louise M. Davies Symphony Hall, and the Main Branch of the San Francisco Public Library.", "cross_street"=>"Between: 7th & 8th St.", "food"=>"Nearby restaurant reviews from <a rel=\"external\" href=\"http://www.yelp.com/search?find_desc=Restaurant+&amp;ns=1&amp;rpp=10&amp;find_loc=1150 Market Street San Francisco, CA 94102\">yelp.com</a>", "shopping"=>"Local shopping from <a rel=\"external\" href=\"http://www.yelp.com/search?find_desc=Shopping+&amp;ns=1&amp;rpp=10&amp;find_loc=1150 Market Street San Francisco, CA 94102\">yelp.com</a>", "attraction"=>"More station area attractions from <a rel=\"external\" href=\"http://www.yelp.com/search?find_desc=+&amp;ns=1&amp;rpp=10&amp;find_loc=1150 Market Street San Francisco, CA 94102\">yelp.com</a> and <a rel=\"external\" href=\"http://www.sfgate.com/cgi-bin/article.cgi?f=/c/a/2007/05/17/NSGKNPL00L16.DTL\">sfgate.com</a>", "link"=>"http://www.bart.gov/stations/CIVC/index.aspx"}, @filename="stn.aspx", @cmd="stninfo", @name="Civic Center/UN Plaza", @latitude="37.779528", @longitude="-122.413756", @address="1150 Market Street", @city="San Francisco", @state="CA", @zipcode="94102">
 
-Then, if you want routes to West Oakland:
+#### Station to Route relationship
+
+If you want routes to West Oakland:
 
     routes = civc.routes[:to => :woak]
     # Routes from Civic Center to West Oakland
@@ -61,6 +63,20 @@ Or, all routes that *include* Civic Center:
     routes.count
     => 7
 
-### Real-time Departures
+#### Station Estimated Departure Times
 
-(Coming Soon...)
+Better BART makes retrieving departures times for any station quite simple:
+    
+    civc.departures
+    => [#<Bart::Departure:0x007ffcfb3671a8 @minutes="12", @bikes="1", @cars="4", @platform="1", @direction="South", @origin=:civc, @destination=:daly>, #<Bart::Departure:0x007ffcfb366eb0 @minutes="20", @bikes="1", @cars="9", @platform="1", @direction="South", @origin=:civc, @destination=:daly>, #<Bart::Departure:0x007ffcfb366b90 @minutes="40", @bikes="1", @cars="9", @platform="1", @direction="South", @origin=:civc, @destination=:daly>, #<Bart::Departure:0x007ffcfb366758 @minutes="13", @bikes="1", @cars="8", @platform="2", @direction="North", @origin=:civc, @destination=:dubl>, #<Bart::Departure:0x007ffcfb366438 @minutes="41", @bikes="1", @cars="4", @platform="2", @direction="North", @origin=:civc, @destination=:dubl>, #<Bart::Departure:0x007ffcfb366028 @minutes="9", @bikes="1", @cars="5", @platform="2", @direction="North", @origin=:civc, @destination=:pitt>, #<Bart::Departure:0x007ffcfb365d58 @minutes="31", @bikes="1", @cars="5", @platform="2", @direction="North", @origin=:civc, @destination=:pitt>, #<Bart::Departure:0x007ffcfb365ab0 @minutes="51", @bikes="1", @cars="5", @platform="2", @direction="North", @origin=:civc, @destination=:pitt>, #<Bart::Departure:0x007ffcfb365650 @minutes="96", @bikes="1", @cars="10", @platform="1", @direction="South", @origin=:civc, @destination=:sfia>, #<Bart::Departure:0x007ffcfb3651f0 @minutes="3", @bikes="1", @cars="5", @platform="1", @direction="South", @origin=:civc, @destination=:mlbr>, #<Bart::Departure:0x007ffcfb364e58 @minutes="13", @bikes="1", @cars="9", @platform="1", @direction="South", @origin=:civc, @destination=:mlbr>, #<Bart::Departure:0x007ffcfb3648b8 @minutes="26", @bikes="1", @cars="9", @platform="1", @direction="South", @origin=:civc, @destination=:mlbr>]
+
+The `departures` method on a `Bart::Station` instance returns an array
+with additional methods:
+
+    departures = civc.departures
+    departures.northbound     # Northbound
+    departures.southbound     # Southbound
+    departures.platform(1)    # From platfrom 1
+
+Beware that whenever the departures method is called, a new request is sent. Therefore you should store the result in a variable until you want updated results.
+
