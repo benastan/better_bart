@@ -1,3 +1,7 @@
+require 'bart/fetchable'
+require 'bart/route'
+require 'bart/departure'
+
 module Bart
   class Station < Fetchable
     attr_accessor :routes, :address, :city, :state, :latitude, :longitude, :abbr, :name

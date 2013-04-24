@@ -1,3 +1,6 @@
+require 'bart/fetchable'
+require 'bart/station'
+
 module Bart
   class Route < Fetchable
     attr_reader :abbr, :destination, :name, :number, :origin, :search_hash, :direction, :stations

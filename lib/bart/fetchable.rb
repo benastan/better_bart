@@ -1,3 +1,5 @@
+require 'bart/requestable'
+
 module Bart
   class Fetchable < Requestable
     module SharedMethods

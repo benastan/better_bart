@@ -1,3 +1,6 @@
+require 'bart/requestable'
+require 'bart/station'
+
 module Bart
   class Departure < Requestable
     attr_accessor :bikes, :origin, :destination, :direction, :cars, :minutes, :platform
